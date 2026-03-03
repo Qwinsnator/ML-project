@@ -25,3 +25,7 @@ print("welcome")
 =======
 print(data)
 >>>>>>> e12f7c4c24eb7e09d2eb0335b1484cb9a0f3976e
+
+
+
+# hallo als laatste test van mij - Andrea
