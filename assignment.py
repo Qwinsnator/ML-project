@@ -17,6 +17,3 @@ print(f'The number of samples: {len(data.index)}')
 print(f'The number of columns: {len(data.columns)}')
 
 print(data)
-#%%
-print("welcome")
-#%%
