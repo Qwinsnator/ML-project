@@ -1,2 +1,2 @@
 test
-load DeprecationWarning 
+load DeprecationWarning
