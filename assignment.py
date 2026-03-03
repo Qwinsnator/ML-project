@@ -17,3 +17,5 @@ print(f'The number of columns: {len(data.columns)}')
 #%%
 print("welcome")
 # %%
+
+#test of jullie dit zien
