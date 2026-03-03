@@ -8,14 +8,20 @@
 #from worcliver.load_data import load_data
 #from hn.load_data import load_data
 #from ecg.load_data import load_data
+import pandas as pd
 
-data = load_data()
+
+data = pd.read_csv("GIST_radiomicFeatures.csv")
 print(f'The number of samples: {len(data.index)}')
 
 print(f'The number of columns: {len(data.columns)}')
 
+<<<<<<< HEAD
 #%%
 print("welcome")
 # %%
 
 #test of jullie dit zien
+=======
+print(data)
+>>>>>>> e12f7c4c24eb7e09d2eb0335b1484cb9a0f3976e
