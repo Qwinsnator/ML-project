@@ -16,7 +16,16 @@ print(f'The number of samples: {len(data.index)}')
 
 print(f'The number of columns: {len(data.columns)}')
 
-print(data)
+<<<<<<< HEAD
 #%%
 print("welcome")
-#%%
+# %%
+
+#test of jullie dit zien
+=======
+print(data)
+>>>>>>> e12f7c4c24eb7e09d2eb0335b1484cb9a0f3976e
+
+
+
+# hallo als laatste test van mij - Andrea
