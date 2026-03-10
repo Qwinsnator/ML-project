@@ -8,8 +8,7 @@ Pipeline Steps:
 1. Load data and check for missing values
 2. Scale features to [0,1] using MinMaxScaler
 3. Feature selection using RFECV (Recursive Feature Elimination with Cross-Validation)
-4. Train and evaluate classifiers using 5-fold cross-validation
-
+4. Train and evaluate classifiers using 5-fold cross-validatio
 
 
 Based on code from Excercises E1.2, E1.4, and E3.1
