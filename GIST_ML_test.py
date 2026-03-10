@@ -12,7 +12,6 @@ Pipeline Steps:
 
 Based on code from Excercises E1.2, E1.4, and E3.1
 """
-
 # Import required libraries
 import pandas as pd
 import numpy as np
