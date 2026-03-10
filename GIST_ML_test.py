@@ -10,8 +10,6 @@ Pipeline Steps:
 3. Feature selection using RFECV (Recursive Feature Elimination with Cross-Validation)
 4. Train and evaluate classifiers using 5-fold cross-validatio
 
-
-Based on code from Excercises E1.2, E1.4, and E3.1
 """
 # Import required libraries
 import pandas as pd
