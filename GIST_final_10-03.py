@@ -35,7 +35,6 @@ from sklearn.neighbors import KNeighborsClassifier
 # Import data loading function
 from load_data import load_data
 
-
 def preprocess_data():
     """
     Load and preprocess the GIST radiomic features dataset.
