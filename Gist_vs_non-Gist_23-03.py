@@ -14,8 +14,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import feature_selection, svm
 from scipy.stats import zscore
-#test
 
 def load_gist_train_data():
     print("Loading GIST Train dataset...")
@@ -100,10 +100,55 @@ def preprocess_data(X):
     return X_scaled, scaler, imputer
 
 
+def perform_feature_selection(X, y, output_dir):
+    """
+    Perform Recursive Feature Elimination with Cross-Validation (RFECV)
+    using SVM as the estimator. Returns the selected features and saves a plot.
+    """
+    print("\nPerforming feature selection with RFECV...")
+    
+    # Create the RFE object and compute a cross-validated score
+    svc = svm.SVC(kernel="linear")
+    
+    # RFECV for feature selection
+    rfecv = feature_selection.RFECV(
+        estimator=svc, step=1,
+        cv=StratifiedKFold(4),
+        scoring='roc_auc')
+    rfecv.fit(X, y)
+    
+    # Get selected features
+    selected_features = X.columns[rfecv.support_]
+    X_selected = X[selected_features]
+    
+    print(f"Optimal number of features: {rfecv.n_features_}")
+    print(f"Selected features: {list(selected_features)}")
+    
+    # Plot number of features VS. cross-validation scores
+    plt.figure(figsize=(10, 6))
+    plt.xlabel("Number of features selected")
+    plt.ylabel("Cross validation score (ROC AUC)")
+    plt.plot(range(1, len(rfecv.cv_results_["mean_test_score"]) + 1), rfecv.cv_results_["mean_test_score"])
+    plt.title("RFECV - Feature Selection Results")
+    plt.grid(True, alpha=0.3)
+    
+    plot_path = os.path.join(output_dir, "rfecv_feature_selection.png")
+    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Saved RFECV plot: {plot_path}")
+    
+    return X_selected, selected_features
+
+
 def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
     X_scaled, scaler, imputer = preprocess_data(X)
+    
+    # Perform feature selection on scaled data
+    X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
+    X_selected, selected_features = perform_feature_selection(X_scaled_df, y, output_dir)
 
-    print(f"\nRunning {n_splits}-fold CV on classifiers")
+    print(f"\nRunning {n_splits}-fold CV on classifiers with {X_selected.shape[1]} selected features")
     
     cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     
@@ -124,12 +169,12 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
     for idx, (clf_name, clf) in enumerate(classifiers.items()):
         print(f"\n{clf_name}...")
         
-        acc_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='accuracy')
-        recall_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='recall')
-        auc_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='roc_auc')
+        acc_scores = cross_val_score(clf, X_selected.values, y, cv=cv, scoring='accuracy')
+        recall_scores = cross_val_score(clf, X_selected.values, y, cv=cv, scoring='recall')
+        auc_scores = cross_val_score(clf, X_selected.values, y, cv=cv, scoring='roc_auc')
         
-        clf.fit(X_scaled, y)
-        train_acc = metrics.accuracy_score(y, clf.predict(X_scaled))
+        clf.fit(X_selected.values, y)
+        train_acc = metrics.accuracy_score(y, clf.predict(X_selected.values))
         
         result = {
             'classifier': clf_name,
@@ -155,11 +200,11 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
         axes[idx].axis('off')
     
     plt.tight_layout()
-    plot_path = os.path.join(output_dir, "classifiers_recall_boxplot_robust.png")
+    plot_path = os.path.join(output_dir, "classifiers_recall_boxplot_rfecv.png")
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     
     results_df = pd.DataFrame(results)
-    csv_path = os.path.join(output_dir, "classifiers_recall_metrics_robust.csv")
+    csv_path = os.path.join(output_dir, "classifiers_recall_metrics_rfecv.csv")
     results_df.to_csv(csv_path, index=False)
     
     print(f"\nSaved: {plot_path}, {csv_path}")
@@ -178,7 +223,7 @@ def main():
     # RANK BY RECALL
     ranked_df = results_df.sort_values('recall_mean', ascending=False)
     print("\n" + "="*80)
-    print("CLASSIFIERS RANKED BY RECALL (Robust Scaling, highest first)")
+    print("CLASSIFIERS RANKED BY RECALL (RFECV Feature Selection, highest first)")
     print("="*80)
     print(ranked_df[['classifier', 'recall_mean', 'recall_std', 'auc_mean']].round(4).to_string(index=False))
     
