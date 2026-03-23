@@ -68,10 +68,13 @@ def preprocess_data(X):
     scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X_clean)
     
-    # Z-score for outlier detectie 
+    # Z-score for outlier
     z_scores = pd.DataFrame(zscore(X, nan_policy='omit'), columns=X.columns)
     outliers = (np.abs(z_scores) > 3) # outliers: absolute z-score > 3
     n_outliers = outliers.sum()  # aantal outliers per feature
+
+    # percentage outliers per feature
+    perc_outliers = n_outliers / len(X) * 100
 
     # combineer in dataframe
     outlier_df = pd.DataFrame({
