@@ -14,7 +14,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-
+from scipy.stats import zscore
+#test
 
 def load_gist_train_data():
     print("Loading GIST Train dataset...")
@@ -66,6 +67,35 @@ def preprocess_data(X):
     # Step 4: Robust scale
     scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X_clean)
+    
+    # Z-score for outlier
+    z_scores = pd.DataFrame(zscore(X, nan_policy='omit'), columns=X.columns)
+    outliers = (np.abs(z_scores) > 3) # outliers: absolute z-score > 3
+    n_outliers = outliers.sum()  # aantal outliers per feature
+
+    # percentage outliers per feature
+    perc_outliers = n_outliers / len(X) * 100
+
+    # combineer in dataframe
+    outlier_df = pd.DataFrame({
+        "feature": X.columns,
+        "n_outliers": n_outliers,
+        "percentage": perc_outliers
+    })
+
+    print(f"Total outliers: {n_outliers.sum()}")
+    print(outlier_df[['feature', 'percentage']].sort_values("percentage", ascending=False).head(10))
+
+    #skewness per feature
+    skewness = 3 * (X.mean() - X.median()) / X.std()
+
+    skew_df = pd.DataFrame({
+        "feature": X.columns,
+        "skewness": skewness
+    }).sort_values(by="skewness", key=abs, ascending=False)
+
+    print(skew_df.head(10))
+    print("\nAverage absolute skewness:", skew_df["skewness"].abs().mean())
     
     return X_scaled, scaler, imputer
 
