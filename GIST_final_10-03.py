@@ -1,4 +1,12 @@
 
+<<<<<<< HEAD
+=======
+This version combines:
+- StandardScaler for feature scaling (z-score normalization)
+- RFECV for feature selection (Recursive Feature Elimination with CV)
+- 10-fold Stratified Cross-Validation for evaluation
+"""
+>>>>>>> 047fc3d707f9a4f768f5e5733f85e6728a95b5f1
 # Import required libraries
 import pandas as pd
 import numpy as np

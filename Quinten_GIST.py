@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn import metrics
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_val_score, StratifiedKFold, cross_val_predict
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression, SGDClassifier
@@ -150,6 +150,47 @@ def perform_feature_selection(X, y, output_dir):
     return X_selected, selected_features, scaler, rfecv
 
 
+def plot_classifiers_roc_curves(classifiers, X_selected, y, cv, output_dir):
+    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    axes = axes.flatten()
+    auc_summary = {}
+
+    for idx, (clf_name, clf) in enumerate(classifiers.items()):
+        # Prefer probability estimates; use decision function for SVM when proba is unavailable.
+        if hasattr(clf, 'predict_proba'):
+            y_score = cross_val_predict(clf, X_selected, y, cv=cv, method='predict_proba')[:, 1]
+        elif hasattr(clf, 'decision_function'):
+            y_score = cross_val_predict(clf, X_selected, y, cv=cv, method='decision_function')
+        else:
+            y_score = cross_val_predict(clf, X_selected, y, cv=cv, method='predict')
+
+        fpr, tpr, _ = metrics.roc_curve(y, y_score)
+        auc_score = metrics.roc_auc_score(y, y_score)
+        auc_summary[clf_name] = auc_score
+
+        ax = axes[idx]
+        ax.plot(fpr, tpr, lw=2, label=f'AUC = {auc_score:.3f}')
+        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', lw=1)
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title(f'{clf_name} ROC')
+        ax.legend(loc='lower right')
+        ax.grid(True, alpha=0.3)
+
+    for idx in range(len(classifiers), len(axes)):
+        axes[idx].axis('off')
+
+    plt.tight_layout()
+    plot_path = os.path.join(output_dir, 'classifiers_roc_auc_curves.png')
+    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
+    print(f"Saved ROC curves: {plot_path}")
+    return auc_summary
+
+
 def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
     X_scaled, scaler, imputer = preprocess_data(X)
     
@@ -205,6 +246,11 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
     
     for idx in range(len(classifiers), 6):
         axes[idx].axis('off')
+
+    auc_summary = plot_classifiers_roc_curves(classifiers, X_selected, y, cv, output_dir)
+    print("Out-of-fold ROC AUC per classifier:")
+    for clf_name, auc_score in auc_summary.items():
+        print(f"  {clf_name}: {auc_score:.4f}")
     
     plt.tight_layout()
     plot_path = os.path.join(output_dir, "classifiers_recall_boxplot_rfecv.png")
@@ -241,4 +287,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
