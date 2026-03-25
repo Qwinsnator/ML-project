@@ -14,10 +14,6 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import feature_selection
-from sklearn import model_selection
-from sklearn import svm
-from sklearn.preprocessing import StandardScaler
 
 
 def load_gist_train_data():
@@ -34,7 +30,7 @@ def load_gist_train_data():
     return X, y
 
 
-def preprocess_data(X, y_global):
+def preprocess_data(X):
     # Step 1: Impute
     imputer = SimpleImputer(strategy="median")
     X_imputed = imputer.fit_transform(X)
@@ -65,41 +61,25 @@ def preprocess_data(X, y_global):
     # Step 3: Re-impute rows with any outliers (median per feature)
     X_clean = SimpleImputer(strategy="median").fit_transform(X_outlier_free)
     
-    print(f"Outliers: {n_outliers_total} in {n_features_outlier}/{X.shape[1]} features")
+    print(f"Outliers: {n_outliers_total} in {n_features_outlier}/{X.shape[1]} features ({n_outliers_total/n_original*100:.1f}% rows affected)")
     
     # Step 4: Robust scale
     scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X_clean)
     
-    print("\nApplying RFECV feature selection...")
-    svc = svm.SVC(kernel="linear")
-    rfecv = feature_selection.RFECV(
-        estimator=svc, 
-        step=0.1,
-        cv=model_selection.StratifiedKFold(5),  
-        scoring='roc_auc'
-    )
-    rfecv.fit(X_scaled, y_global)
-    X_selected = rfecv.transform(X_scaled)
-    
-    print(f"RFECV: Selected {rfecv.n_features_}/{X.shape[1]} features")
-    
-    return X_selected, scaler, imputer, rfecv
+    return X_scaled, scaler, imputer
 
 
 def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
-    X_selected, scaler, imputer, rfecv = preprocess_data(X, y)
-
-    print(f"Using {rfecv.n_features_} features selected by RFECV")
-
     print(f"\nRunning {n_splits}-fold CV on classifiers")
     
+    X_scaled, scaler, imputer = preprocess_data(X)
     cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     
     classifiers = {
         'LDA': LinearDiscriminantAnalysis(solver='eigen', shrinkage='auto'),
         'GaussianNB': GaussianNB(),
-        'LogisticRegression': LogisticRegression(max_iter=2000, solver='liblinear', random_state=42, C=0.1),
+'LogisticRegression': LogisticRegression(max_iter=2000, solver='liblinear', random_state=42, C=0.1),
         'SGDClassifier': SGDClassifier(random_state=42, max_iter=1000),
         'KNeighbors': KNeighborsClassifier(n_neighbors=5),
         'DecisionTree': DecisionTreeClassifier(random_state=42, max_depth=10),
@@ -113,12 +93,12 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
     for idx, (clf_name, clf) in enumerate(classifiers.items()):
         print(f"\n{clf_name}...")
         
-        acc_scores = cross_val_score(clf, X_selected, y, cv=cv, scoring='accuracy')
-        recall_scores = cross_val_score(clf, X_selected, y, cv=cv, scoring='recall')
-        auc_scores = cross_val_score(clf, X_selected, y, cv=cv, scoring='roc_auc')
+        acc_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='accuracy')
+        recall_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='recall')
+        auc_scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='roc_auc')
         
-        clf.fit(X_selected, y)
-        train_acc = metrics.accuracy_score(y, clf.predict(X_selected))
+        clf.fit(X_scaled, y)
+        train_acc = metrics.accuracy_score(y, clf.predict(X_scaled))
         
         result = {
             'classifier': clf_name,
@@ -144,11 +124,11 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
         axes[idx].axis('off')
     
     plt.tight_layout()
-    plot_path = os.path.join(output_dir, "classifiers_recall_boxplot_robust_rfecv.png")
+    plot_path = os.path.join(output_dir, "classifiers_recall_boxplot_robust.png")
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     
     results_df = pd.DataFrame(results)
-    csv_path = os.path.join(output_dir, "classifiers_recall_metrics_robust_rfecv.csv")
+    csv_path = os.path.join(output_dir, "classifiers_recall_metrics_robust.csv")
     results_df.to_csv(csv_path, index=False)
     
     print(f"\nSaved: {plot_path}, {csv_path}")
@@ -167,7 +147,7 @@ def main():
     # RANK BY RECALL
     ranked_df = results_df.sort_values('recall_mean', ascending=False)
     print("\n" + "="*80)
-    print("CLASSIFIERS RANKED BY RECALL (Robust Scaling + RFECV, highest first)")
+    print("CLASSIFIERS RANKED BY RECALL (Robust Scaling, highest first)")
     print("="*80)
     print(ranked_df[['classifier', 'recall_mean', 'recall_std', 'auc_mean']].round(4).to_string(index=False))
     

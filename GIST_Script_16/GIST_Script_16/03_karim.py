@@ -7,9 +7,7 @@ import pandas as pd
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import cross_val_score, StratifiedKFold, learning_curve
-from sklearn.feature_selection import SelectKBest, f_classif
-
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 # Classifiers (from E1.2)
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -137,8 +135,8 @@ def run_classifiers_with_cv(X, y, output_dir, n_splits=5):
             'cv_auc_std': np.std(roc_auc_scores),
             'cv_precision_mean': np.mean(precision_scores),
             'cv_precision_std': np.std(precision_scores),
-            'cv_recall_mean': np.mean(recall_scores),
-            'cv_recall_std': np.std(recall_scores),
+            'sensitivity_mean': np.mean(recall_scores),
+            'sensitivity_std': np.std(recall_scores),
             'train_accuracy': train_acc,
             'train_auc': train_auc
         }
@@ -364,10 +362,10 @@ def main():
     print("ANALYSIS COMPLETE")
     print(f"{'='*60}")
     
-    # Find best model
+    # Find best model (by highest recall/sensitivity)
     cv_df = pd.DataFrame(cv_results)
-    best_auc_idx = cv_df['cv_auc_mean'].idxmax()
-    best_model = cv_df.loc[best_auc_idx]
+    best_recall_idx = cv_df['cv_recall_mean'].idxmax()
+    best_model = cv_df.loc[best_recall_idx]
     
     print("\nBest classifier (by CV AUC):")
     print(f"  {best_model['classifier']}")
