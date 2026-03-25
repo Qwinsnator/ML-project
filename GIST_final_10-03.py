@@ -1,13 +1,4 @@
-"""
-GIST vs Non-GIST Classification Pipeline (Final Version)
-========================================================
-Uses: StandardScaler + RFECV + 10-fold Cross-Validation
 
-This version combines:
-- StandardScaler for feature scaling (z-score normalization)
-- RFECV for feature selection (Recursive Feature Elimination with CV)
-- 10-fold Stratified Cross-Validation for evaluation
-""
 # Import required libraries
 import pandas as pd
 import numpy as np
