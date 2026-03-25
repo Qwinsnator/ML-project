@@ -6,7 +6,11 @@ This version combines:
 - RFECV for feature selection (Recursive Feature Elimination with CV)
 - 10-fold Stratified Cross-Validation for evaluation
 """
+<<<<<<< HEAD
+
+=======
 >>>>>>> 047fc3d707f9a4f768f5e5733f85e6728a95b5f1
+>>>>>>> 2037158505ab4223f71c8e9cc06069692d3728d4
 # Import required libraries
 import pandas as pd
 import numpy as np
@@ -33,6 +37,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 # Import data loading function
 from load_data import load_data
+
 
 def preprocess_data():
     """
