@@ -30,18 +30,18 @@ def load_gist_train_data():                                                 #fun
 def preprocessing(X):                                                       #function for preprocessing                                          
     imputer = SimpleImputer(strategy="median")                              #impute missing values with median                     
     X_imputed = imputer.fit_transform(X)                                    #fit imputer and transform data            
-    print("Outlier removal...")                                             #print message "outliers removal"                                        
+    print("Outlier removal...")                                                                                  
     n_features_outlier = 0                                                  #counter for features with outliers                                                                                                                       
     n_outliers_total = 0                                                    #counter for total outliers
     X_out = np.copy(X_imputed)                                              #copy of imputed data for outlier removal
-    for j in range(X.shape[1]):                                             #iterate over features
-        m = np.mean(X_imputed[:, j])                                        #mean of feature j
-        s = np.std(X_imputed[:, j])                                         #std of feature j
-        mask = (X_imputed[:, j] < m - 3*s) | (X_imputed[:, j] > m + 3*s)    #mask for outliers (3 std dev from mean)
-        n_outliers_j = mask.sum()                                           #number of outliers in feature j
-        if n_outliers_j > 0:                                                #if outliers found, update counters and set outliers to NaN for imputation
+    for idx in range(X.shape[1]):                                             #iterate over features
+        mean = np.mean(X_imputed[:, idx])                                        #mean of feature idx
+        std = np.std(X_imputed[:, idx])                                         #std of feature idx
+        mask = (X_imputed[:, idx] < mean - 3*std) | (X_imputed[:, idx] > mean + 3*std)    #mask for outliers (3 std dev from mean)
+        n_outliers_idx = mask.sum()                                           #number of outliers in feature idx
+        if n_outliers_idx > 0:                                                #if outliers found, update counters and set outliers to NaN for imputation
             n_features_outlier += 1                                         #increment feature outlier counter
-            n_outliers_total += n_outliers_j                                #increment total outlier counter
+            n_outliers_total += n_outliers_idx                                #increment total outlier counter
             X_out[mask, :] = np.nan                                         #set outliers to NaN for imputation
     X_clean = SimpleImputer(strategy="median").fit_transform(X_out)         #impute outliers with median
     print(f"Outliers: {n_outliers_total}")                                  
@@ -62,87 +62,86 @@ def rfecv_feature_select(X, y, output_dir):                                 #fun
     svc = SVC(kernel='linear')                                              #SVM with linear kernel for feature selection (weights can be interpreted for importance)
     rfecv = RFECV(svc, step=1, cv=StratifiedKFold(5), scoring='roc_auc')    #RFECV with SVM, 5-fold CV, and AUC as scoring metric
     rfecv.fit(X_s, y)                                                       #fit RFECV to data
-    X_sel = rfecv.transform(X_s)                                            #transform data to selected features
-    print(f"Features: {X.shape[1]} -> {X_sel.shape[1]}")                    #print number of features before and after selection
+    X_selected = rfecv.transform(X_s)                                            #transform data to selected features
+    print(f"Features: {X.shape[1]} -> {X_selected.shape[1]}")                    #print number of features before and after selection
     plt.figure(figsize=(10,6))                                              #plot RFECV performance vs number of features
     plt.plot(range(1, len(rfecv.cv_results_['mean_test_score'])+1), rfecv.cv_results_['mean_test_score'])   #plot mean test score (AUC) vs number of features
     plt.title('RFECV') 
     plt.savefig(os.path.join(output_dir, 'rfecv.png'))
     plt.close()  
-    return X_sel                                                            #return selected features after RFECV
+    return X_selected                                                            #return selected features after RFECV
 #%% 
-def grid_tune_metrics(X_sel, y, cv):                        #function for grid search tuning and metrics evaluation
-    param_distributions = {                                 #hyperparameter grids for each classifier
+def grid_tune_metrics(X_selected, y, cv):                                        #function for grid search tuning and metrics evaluation
+    param_distributions = {                                                 #hyperparameter grids for each classifier
         "LogisticRegression": [                             
             {
-                "penalty": ["l1", "l2"],                    #added penalty
-                "C": [0.001, 0.01, 0.1],                    #added smaller C 
-                "solver": ["liblinear"],                    #fixed to liblinear 
-                "class_weight": [None, "balanced"],         #added class weight options
+                "penalty": ["l1", "l2"],                    
+                "C": [0.001, 0.01, 0.1],                     
+                "solver": ["liblinear"],                    
+                "class_weight": [None, "balanced"],        
             }
         ],
         "SVM": [
             {
-                "kernel": ["linear"],                       #linear kernel 
-                "C": [0.001, 0.01, 0.1, 1],                 #added smaller C values
-                "class_weight": [None],                     #SVM class weight fixed to None 
+                "kernel": ["linear"],                       
+                "C": [0.001, 0.01, 0.1, 1],                
+                "class_weight": [None],                      
             },
             {
-                "kernel": ["rbf"],                          #added RBF kernel option
-            "C": [0.01, 0.1, 1, 10],                        #added C values for RBF kernel
-                "gamma": [0.001, 0.01, 0.1],                #added gamma values 
-                "class_weight": [None],                     #SVM class weight fixed to None
+                "kernel": ["rbf"],                          
+            "C": [0.01, 0.1, 1, 10],                        
+                "gamma": [0.001, 0.01, 0.1],                 
+                "class_weight": [None],                    
             },
         ],
         "KNN": {
-            "n_neighbors": [3, 5, 7, 9, 11, 13, 15],
-            "weights": ["uniform", "distance"],
-            "p": [1, 2],
+            "n_neighbors": [3, 5, 7, 9, 11, 13, 15],       
+            "weights": ["uniform", "distance"],          
+            "p": [1, 2],                                 
         },
         "DecisionTree": {
-            "criterion": ["gini", "entropy"],
-            "max_depth": [5, 10, 15, 20, 30],
-            "min_samples_split": [2, 3, 4, 5, 10],
-            "min_samples_leaf": [1, 2, 5, 7],
-            "splitter": ["random"],   
-            "ccp_alpha": [0.0005, 0.001, 0.005, 0.01],
-            "class_weight": [None],
+            "criterion": ["gini", "entropy"],             
+            "max_depth": [5, 10, 15, 20, 30],              
+            "min_samples_split": [2, 3, 4, 5, 10],        
+            "min_samples_leaf": [1, 2, 5, 7],               
+            "splitter": ["random"],                          
+            "ccp_alpha": [0.0005, 0.001, 0.005, 0.01],      
+            "class_weight": [None],                         
         },
         "RandomForest": {
-            "n_estimators": [200, 250, 300, 350],
-            "max_depth": [None, 5, 10, 15, 20],
-            "min_samples_split": [2, 5, 10, 20],
-            "min_samples_leaf": [1, 2, 4], # higher means underfitting
-            "max_features": ["sqrt", "log2", None],
-            "bootstrap": [True, False],
-            "class_weight": [None],
+            "n_estimators": [200, 250, 300, 350],          
+            "max_depth": [None, 5, 10, 15, 20],            
+            "min_samples_split": [2, 5, 10, 20],            
+            "min_samples_leaf": [1, 2, 4],                 
+            "max_features": ["sqrt", "log2", None],      
+            "bootstrap": [True, False],                    
+            "class_weight": [None],                       
         },
     }
-    clfs = {
-        'LogisticRegression': LogisticRegression(max_iter=2000, solver='liblinear', random_state=RANDOM_STATE),
+    classifiers = {                                                #base classifiers for each model type
+        'LogisticRegression': LogisticRegression(max_iter=2000, solver='liblinear', random_state=RANDOM_STATE), 
         'SVM': SVC(random_state=RANDOM_STATE),
         'KNN': KNeighborsClassifier(),
         'DecisionTree': DecisionTreeClassifier(random_state=RANDOM_STATE),
         'RandomForest': RandomForestClassifier(random_state=RANDOM_STATE),
     }
-    results = []
-    tuned = {}
+    results = []                                            #list to store results for each classifier
+    tuned = {}                                              #dictionary to store best tuned classifiers
     print("\n=== GRIDSEARCH + METRICS ===")
-    spec_scorer = make_scorer(recall_score, pos_label=0)
-    for name, clf_base in clfs.items():
+    spec_scorer = make_scorer(recall_score, pos_label=0)    #custom scorer for specificity
+    for name, classifier_base in classifiers.items():                     #iterate over classifiers
         print(f"{name}...")
-        search = GridSearchCV(clf_base, param_distributions[name], scoring='roc_auc', n_jobs=-1, cv=cv)
-        search.fit(X_sel, y)
-        best_clf = search.best_estimator_
-        tuned[name] = best_clf
-        # Metrics
-        acc = cross_val_score(best_clf, X_sel, y, cv=cv, scoring='accuracy')
-        recall = cross_val_score(best_clf, X_sel, y, cv=cv, scoring='recall')
-        auc_ = cross_val_score(best_clf, X_sel, y, cv=cv, scoring='roc_auc')
-        f1 = cross_val_score(best_clf, X_sel, y, cv=cv, scoring='f1')
-        spec = cross_val_score(best_clf, X_sel, y, cv=cv, scoring=spec_scorer)
-        row = {
-            'classifier': name,
+        search = GridSearchCV(classifier_base, param_distributions[name], scoring='roc_auc', n_jobs=-1, cv=cv) #grid search with AUC as scoring metric
+        search.fit(X_selected, y)                                #fit grid search to data
+        best_classifier = search.best_estimator_                   #get best estimator from grid search
+        tuned[name] = best_classifier                              #store best classifier in tuned dictionary
+        acc = cross_val_score(best_classifier, X_selected, y, cv=cv, scoring='accuracy')    #cross-validated accuracy
+        recall = cross_val_score(best_classifier, X_selected, y, cv=cv, scoring='recall')   #cross-validated recall (sensitivity)
+        auc_ = cross_val_score(best_classifier, X_selected, y, cv=cv, scoring='roc_auc')    #cross-validated AUC
+        f1 = cross_val_score(best_classifier, X_selected, y, cv=cv, scoring='f1')           #cross-validated F1 score
+        spec = cross_val_score(best_classifier, X_selected, y, cv=cv, scoring=spec_scorer)  #cross-validated specificity
+        row = {                                                                 #dictionary to store results (AUC, recall, F1, spec) for current classifier 
+            'classifier': name, 
             'tune_auc': search.best_score_,
             'auc_mean': auc_.mean(), 'auc_std': auc_.std(),
             'acc_mean': acc.mean(), 'acc_std': acc.std(),
@@ -151,7 +150,7 @@ def grid_tune_metrics(X_sel, y, cv):                        #function for grid s
             'spec_mean': spec.mean(), 'spec_std': spec.std(),
             'best_params': str(search.best_params_)
         }
-        results.append(row)
+        results.append(row)                                                     #append results for current classifier to results list
         print(f"  Best params: {search.best_params_}")
         print(f"  AUC CV: {auc_.mean():.4f} ± {auc_.std():.4f}")
         print(f"  Accuracy: {acc.mean():.4f} ± {acc.std():.4f}")
@@ -161,17 +160,14 @@ def grid_tune_metrics(X_sel, y, cv):                        #function for grid s
     pd.DataFrame(results).to_csv('grid_tuning_metrics.csv', index=False)
     return tuned
 
-def main():
-    os.makedirs('results_grid', exist_ok=True)
-    X, y = load_gist_train_data()
-    X_scaled = preprocessing(X)
-    X_sel = rfecv_feature_select(X_scaled, y, 'results_grid')
-    cv = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)
-    tuned = grid_tune_metrics(X_sel, y, cv)
-    print("\nTuning complete. Full metrics printed + grid_tuning_metrics.csv")
+def main():                                                                     #main function to execute the workflow
+    os.makedirs('results_grid', exist_ok=True)                                  #create directory for results if it doesn't exist
+    X, y = load_gist_train_data()                                               #load data
+    X_scaled = preprocessing(X)                                                 #preprocess data (imputation, outlier removal, scaling)
+    X_selected = rfecv_feature_select(X_scaled, y, 'results_grid')                   #feature selection using RFECV
+    cv = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)            #stratified 5-fold cross-validation setup
+    tuned = grid_tune_metrics(X_selected, y, cv)                                     #grid search tuning and metrics evaluation for each classifier
+    print("\nTuning complete. Full metrics printed + grid_tuning_metrics.csv")  
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     main()
-
-
-# %%
