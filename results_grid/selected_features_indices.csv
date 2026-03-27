@@ -1,0 +1,47 @@
+feature,index
+PREDICT_original_sf_cvar_std_2.5D,9
+PREDICT_original_sf_evar_std_2.5D,13
+PREDICT_original_sf_solidity_std_2.5D,15
+PREDICT_original_of_theta_x,21
+PREDICT_original_hf_skewness,29
+PREDICT_original_hf_peak_position,32
+PREDICT_original_logf_energy_sigma1,47
+PREDICT_original_logf_peak_position_sigma5,58
+PREDICT_original_logf_energy_sigma5,60
+PREDICT_original_logf_quartile_range_sigma5,61
+PREDICT_original_logf_mean_sigma10,65
+PREDICT_original_logf_skewness_sigma10,68
+PREDICT_original_logf_peak_position_sigma10,71
+PREDICT_original_logf_energy_sigma10,73
+PREDICT_original_tf_LBP_quartile_range_R3_P12,87
+PREDICT_original_tf_GLCM_contrastd3.0A1.57,121
+PREDICT_original_tf_GLCMMS_contrastd1.0A2.36mean,169
+PREDICT_original_tf_GLCMMS_homogeneityd3.0A2.36mean,209
+PREDICT_original_tf_GLCMMS_energyd1.0A0.0mean,227
+PREDICT_original_tf_Gabor_energy_F0.05_A0.0,269
+PREDICT_original_tf_Gabor_quartile_range_F0.05_A0.0,270
+PREDICT_original_tf_Gabor_peak_F0.05_A0.79,279
+PREDICT_original_tf_Gabor_max_F0.05_A1.57,286
+PREDICT_original_tf_Gabor_median_F0.05_A1.57,288
+PREDICT_original_tf_Gabor_peak_F0.05_A1.57,292
+PREDICT_original_tf_Gabor_peak_F0.05_A2.36,305
+PREDICT_original_tf_Gabor_median_F0.2_A0.0,314
+PREDICT_original_tf_Gabor_skewness_F0.2_A0.79,329
+PREDICT_original_tf_Gabor_quartile_range_F0.2_A0.79,335
+PREDICT_original_tf_Gabor_median_F0.2_A1.57,340
+PREDICT_original_tf_Gabor_median_F0.5_A0.0,366
+PREDICT_original_tf_Gabor_std_F0.5_A0.0,367
+PREDICT_original_tf_Gabor_quartile_range_F0.5_A0.0,374
+PREDICT_original_tf_Gabor_mean_F0.5_A0.79,378
+PREDICT_original_tf_Gabor_energy_F0.5_A1.57,399
+PREDICT_original_tf_Gabor_peak_position_F0.5_A2.36,410
+"PREDICT_original_vf_Frangi_full_median_SR(1.0, 10.0)_SS2.0",418
+"PREDICT_original_vf_Frangi_edge_median_SR(1.0, 10.0)_SS2.0",431
+"PREDICT_original_vf_Frangi_inner_min_SR(1.0, 10.0)_SS2.0",441
+"PREDICT_original_vf_Frangi_inner_energy_SR(1.0, 10.0)_SS2.0",451
+PREDICT_original_phasef_monogenic_mean_WL3_N5,456
+PREDICT_original_phasef_monogenic_skewness_WL3_N5,459
+PREDICT_original_phasef_phasecong_mean_WL3_N5,469
+PREDICT_original_phasef_phasecong_skewness_WL3_N5,472
+PREDICT_original_phasef_phasecong_kurtosis_WL3_N5,473
+PREDICT_original_phasef_phasesym_range_WL3_N5,489
