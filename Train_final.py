@@ -28,7 +28,7 @@ def load_gist_train_data():                                                 #fun
     return X, y                                                             #return features and labels
 #%%
 def preprocessing(X):                                                       #function for preprocessing                                          
-    imputer = SimpleImputer(strategy="median")                              #impute missing value with median                     
+    imputer = SimpleImputer(strategy="median")                              #impute missing values with median                     
     X_imputed = imputer.fit_transform(X)                                    #fit imputer and transform data            
     print("Outlier removal...")                                             #print message "outliers removal"                                        
     n_features_outlier = 0                                                  #counter for features with outliers                                                                                                                       
