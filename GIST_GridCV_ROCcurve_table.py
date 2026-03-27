@@ -1,8 +1,3 @@
-"""GIST GridSearchCV + Full Metrics.
-
-Preprocess/RFECV/GridSearchCV + CV metrics (AUC, Accuracy, Recall, F1, Specificity) printed + CSV.
-+ Combined ROC curve for all tuned classifiers.
-"""
 
 import os
 import matplotlib
@@ -181,7 +176,7 @@ def grid_tune_metrics(X_sel, y, cv):
         print(f"  F1: {f1.mean():.4f} ± {f1.std():.4f}")
         print(f"  Specificity: {spec.mean():.4f} ± {spec.std():.4f}")
 
-    # ROC diagonal + finish
+    # ROC
     ax.plot([0, 1], [0, 1], 'k--', lw=1, label='Random')
     ax.set_xlim([0, 1]); ax.set_ylim([0, 1.05])
     ax.set_xlabel('False Positive Rate')
@@ -198,23 +193,6 @@ def grid_tune_metrics(X_sel, y, cv):
     # Save detailed CSV (already exists)
     detailed_csv = 'results_grid/grid_tuning_metrics_detailed.csv'
     pd.DataFrame(results).to_csv(detailed_csv, index=False)
-    
-    # NEW: Report-ready table (subset key metrics)
-    report_df = pd.DataFrame({
-        'Classifier': [r['classifier'] for r in results],
-        'Best Params': [r['best_params'] for r in results],
-        'AUC (mean±std)': [f"{r['auc_mean']:.3f}±{r['auc_std']:.3f}" for r in results],
-        'Accuracy (mean±std)': [f"{r['acc_mean']:.3f}±{r['acc_std']:.3f}" for r in results],
-        'Recall (mean±std)': [f"{r['recall_mean']:.3f}±{r['recall_std']:.3f}" for r in results],
-        'F1 (mean±std)': [f"{r['f1_mean']:.3f}±{r['f1_std']:.3f}" for r in results],
-        'Specificity (mean±std)': [f"{r['spec_mean']:.3f}±{r['spec_std']:.3f}" for r in results]
-    })
-    
-    
-    
-    report_csv = 'results_grid/table_classifiers_metrics.csv'
-    report_df.to_csv(_csv, index=False)
-    print(f"📊 Detailed metrics: {detailed_csv}")
     
     return tuned
 
