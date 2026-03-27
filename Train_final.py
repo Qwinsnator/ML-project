@@ -1,3 +1,4 @@
+#%%
 #import libraries
 import os
 import matplotlib
@@ -17,81 +18,80 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import recall_score, make_scorer
 from scipy.stats import zscore, loguniform
 
-RANDOM_STATE = 42                                                                                           #fixed random state
-
-def load_gist_train_data():                                                                                 #function to load data
-    df = pd.read_csv("GIST_Train.csv")                                                                      #read csv file
-    print(f"Data: {df.shape}, Classes: {df['label'].value_counts()}")                                       #print data shape and class distribution
-    X = df.drop(columns=["label"]).select_dtypes(include=[np.number])                                       #select numeric features 
-    y = df["label"].map({"GIST": 1, "non-GIST": 0}).astype(int).values                                      #encode labels as 1 and 0                                 
-    return X, y                                                                                             #return features and labels
-
-def preprocessing(X):                                                                              #function for preprocessing                                          
-    imputer = SimpleImputer(strategy="median")                                                           #impute missing values with median                     
-    X_imputed = imputer.fit_transform(X)                                                          #impute data              
-    print("Outlier removal...")                                                                                   #print message                                        
-    n_features_outlier = 0   #counter for features with outliers                                                                                                                       
-    n_outliers_total = 0 #counter for total outliers
-    X_out = np.copy(X_imputed) #copy of imputed data for outlier removal
-    for j in range(X.shape[1]):                                                                               #iterate over features
-        m = np.mean(X_imputed[:, j])                                       #mean of feature j
-        s = np.std(X_imputed[:, j])                                     #std of feature j
-        mask = (X_imputed[:, j] < m - 3*s) | (X_imputed[:, j] > m + 3*s) #mask for outliers (3 std dev from mean)
-        n_outliers_j = mask.sum()                                            #number of outliers in feature j
-        if n_outliers_j > 0:                                                
-            n_features_outlier += 1
-            n_outliers_total += n_outliers_j
-            X_out[mask, :] = np.nan
-    X_clean = SimpleImputer(strategy="median").fit_transform(X_out)
-    print(f"Outliers: {n_outliers_total}")
-    scaler = RobustScaler()
-    X_scaled = scaler.fit_transform(X_clean)
-    # Diagnostics
-    z = pd.DataFrame(zscore(X, nan_policy='omit'))
-    perc_out = (np.abs(z) > 3).sum() / len(X) * 100
-    print("Outliers % top10:")
-    print(pd.DataFrame({'perc': perc_out}).sort_values('perc', ascending=False).head(10))
-    skew = 3 * (X.mean() - X.median()) / X.std()
-    print("Skewness top10:")
-    print(pd.DataFrame({'skew': skew}).sort_values('skew', ascending=False, key=abs).head(10))
-    return X_scaled
-
-def rfecv_feature_select(X, y, output_dir):
-    scaler = StandardScaler()
-    X_s = scaler.fit_transform(X)
-    svc = SVC(kernel='linear')
-    rfecv = RFECV(svc, step=1, cv=StratifiedKFold(5), scoring='roc_auc')
-    rfecv.fit(X_s, y)
-    X_sel = rfecv.transform(X_s)
-    print(f"Features: {X.shape[1]} -> {X_sel.shape[1]}")
-    plt.figure(figsize=(10,6))
-    plt.plot(range(1, len(rfecv.cv_results_['mean_test_score'])+1), rfecv.cv_results_['mean_test_score'])
-    plt.title('RFECV')
+RANDOM_STATE = 42                                                           #fixed random state
+#%%
+def load_gist_train_data():                                                 #function to load data
+    df = pd.read_csv("GIST_Train.csv")                                      #read csv file
+    print(f"Data: {df.shape}, Classes: {df['label'].value_counts()}")       #print data shape and class distribution
+    X = df.drop(columns=["label"]).select_dtypes(include=[np.number])       #select numeric features 
+    y = df["label"].map({"GIST": 1, "non-GIST": 0}).astype(int).values      #encode labels as 1 and 0                                 
+    return X, y                                                             #return features and labels
+#%%
+def preprocessing(X):                                                       #function for preprocessing                                          
+    imputer = SimpleImputer(strategy="median")                              #impute missing values with median                     
+    X_imputed = imputer.fit_transform(X)                                    #fit imputer and transform data            
+    print("Outlier removal...")                                             #print message "outliers removal"                                        
+    n_features_outlier = 0                                                  #counter for features with outliers                                                                                                                       
+    n_outliers_total = 0                                                    #counter for total outliers
+    X_out = np.copy(X_imputed)                                              #copy of imputed data for outlier removal
+    for j in range(X.shape[1]):                                             #iterate over features
+        m = np.mean(X_imputed[:, j])                                        #mean of feature j
+        s = np.std(X_imputed[:, j])                                         #std of feature j
+        mask = (X_imputed[:, j] < m - 3*s) | (X_imputed[:, j] > m + 3*s)    #mask for outliers (3 std dev from mean)
+        n_outliers_j = mask.sum()                                           #number of outliers in feature j
+        if n_outliers_j > 0:                                                #if outliers found, update counters and set outliers to NaN for imputation
+            n_features_outlier += 1                                         #increment feature outlier counter
+            n_outliers_total += n_outliers_j                                #increment total outlier counter
+            X_out[mask, :] = np.nan                                         #set outliers to NaN for imputation
+    X_clean = SimpleImputer(strategy="median").fit_transform(X_out)         #impute outliers with median
+    print(f"Outliers: {n_outliers_total}")                                  
+    scaler = RobustScaler()                                                 #robust scaler to reduce outlier influence
+    X_scaled = scaler.fit_transform(X_clean)                                #scale data
+    z = pd.DataFrame(zscore(X, nan_policy='omit'))                          #z-score for outlier diagnostics
+    perc_out = (np.abs(z) > 3).sum() / len(X) * 100                         #percentage of outliers per feature
+    print("Outliers % top10:")                                              
+    print(pd.DataFrame({'perc': perc_out}).sort_values('perc', ascending=False).head(10))       #print top 10 features with most skewness              
+    skew = 3 * (X.mean() - X.median()) / X.std()                                                #skewness calculation (Pearson's  coefficient of skewness)
+    print("Skewness top10:")                                                                    
+    print(pd.DataFrame({'skew': skew}).sort_values('skew', ascending=False, key=abs).head(10))  #print top 10 features with most skewness (absolute value)
+    return X_scaled                                                                             #return preprocessed data        
+#%%
+def rfecv_feature_select(X, y, output_dir):                                 #function for feature selection using RFECV
+    scaler = StandardScaler()                                               #standard scaler for RFECV (SVM is sensitive to feature scales)
+    X_s = scaler.fit_transform(X)                                           #scale data for RFECV
+    svc = SVC(kernel='linear')                                              #SVM with linear kernel for feature selection (weights can be interpreted for importance)
+    rfecv = RFECV(svc, step=1, cv=StratifiedKFold(5), scoring='roc_auc')    #RFECV with SVM, 5-fold CV, and AUC as scoring metric
+    rfecv.fit(X_s, y)                                                       #fit RFECV to data
+    X_sel = rfecv.transform(X_s)                                            #transform data to selected features
+    print(f"Features: {X.shape[1]} -> {X_sel.shape[1]}")                    #print number of features before and after selection
+    plt.figure(figsize=(10,6))                                              #plot RFECV performance vs number of features
+    plt.plot(range(1, len(rfecv.cv_results_['mean_test_score'])+1), rfecv.cv_results_['mean_test_score'])   #plot mean test score (AUC) vs number of features
+    plt.title('RFECV') 
     plt.savefig(os.path.join(output_dir, 'rfecv.png'))
-    plt.close()
-    return X_sel
-#%% Gridsearch tuning metrics
-def grid_tune_metrics(X_sel, y, cv):
-    param_distributions = {
-        "LogisticRegression": [
+    plt.close()  
+    return X_sel                                                            #return selected features after RFECV
+#%% 
+def grid_tune_metrics(X_sel, y, cv):                        #function for grid search tuning and metrics evaluation
+    param_distributions = {                                 #hyperparameter grids for each classifier
+        "LogisticRegression": [                             
             {
-                "penalty": ["l1", "l2"],
-                "C": [0.001, 0.01, 0.1],
-                "solver": ["liblinear"],
-                "class_weight": [None, "balanced"],
+                "penalty": ["l1", "l2"],                    #added penalty
+                "C": [0.001, 0.01, 0.1],                    #added smaller C 
+                "solver": ["liblinear"],                    #fixed to liblinear 
+                "class_weight": [None, "balanced"],         #added class weight options
             }
         ],
         "SVM": [
             {
-                "kernel": ["linear"],
-                "C": [0.001, 0.01, 0.1, 1],
-                "class_weight": [None],
+                "kernel": ["linear"],                       #linear kernel 
+                "C": [0.001, 0.01, 0.1, 1],                 #added smaller C values
+                "class_weight": [None],                     #SVM class weight fixed to None 
             },
             {
-                "kernel": ["rbf"],
-                "C": [0.01, 0.1, 1, 10],
-                "gamma": [0.001, 0.01, 0.1],
-                "class_weight": [None],
+                "kernel": ["rbf"],                          #added RBF kernel option
+            "C": [0.01, 0.1, 1, 10],                        #added C values for RBF kernel
+                "gamma": [0.001, 0.01, 0.1],                #added gamma values 
+                "class_weight": [None],                     #SVM class weight fixed to None
             },
         ],
         "KNN": {
@@ -104,7 +104,7 @@ def grid_tune_metrics(X_sel, y, cv):
             "max_depth": [5, 10, 15, 20, 30],
             "min_samples_split": [2, 3, 4, 5, 10],
             "min_samples_leaf": [1, 2, 5, 7],
-            "splitter": ["random"],   # FIXED      # random introduces randomness in splits, can help generalization
+            "splitter": ["random"],   
             "ccp_alpha": [0.0005, 0.001, 0.005, 0.01],
             "class_weight": [None],
         },
