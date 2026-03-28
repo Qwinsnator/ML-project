@@ -51,7 +51,7 @@ df_test = pd.read_csv('GIST_Test.csv')
 X_test = preprocess(df_test, is_test=True)
 
 # 3. Feature selection based on indices from previous grid search, selecting only the features that were identified as important in the previous analysis 
-feat_df = pd.read_csv('results_grid/selected_features_indices.csv')
+feat_df = pd.read_csv('Results/selected_features_indices.csv')
 indices = feat_df['index'].astype(int)
 X_train_sel = X_train[:, indices]
 X_test_sel = X_test[:, indices]
