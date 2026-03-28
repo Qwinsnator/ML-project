@@ -1,6 +1,0 @@
-classifier,best_score_cv_auc,best_params
-LogisticRegression,0.729987004548408,"{'C': np.float64(0.06578820119123178), 'class_weight': None, 'penalty': 'l2', 'solver': 'liblinear'}"
-SVM,0.739571150097466,"{'C': np.float64(9.6098129470364), 'class_weight': None, 'kernel': 'linear'}"
-RandomForest,0.6402858999350227,"{'bootstrap': True, 'class_weight': 'balanced', 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 5, 'min_samples_split': 6, 'n_estimators': 259}"
-KNN,0.5967186484730344,"{'metric': 'minkowski', 'n_neighbors': 11, 'p': 1, 'weights': 'distance'}"
-DecisionTree,0.6094866796621183,"{'ccp_alpha': np.float64(0.0005210476092155952), 'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 20, 'min_samples_leaf': 5, 'min_samples_split': 2, 'splitter': 'random'}"
