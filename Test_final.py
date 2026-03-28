@@ -42,12 +42,12 @@ def preprocess(df, is_test=False):                  #preprocessing function
 
 
 # 1. Training data
-df_train = pd.read_csv('GIST_Train.csv')
+df_train = pd.read_csv('Data/GIST_Train.csv')
 y_train = df_train['label'].map({'GIST':1, 'non-GIST':0}).values
 X_train = preprocess(df_train, is_test=False)
 
 # 2. Test data
-df_test = pd.read_csv('GIST_Test.csv')
+df_test = pd.read_csv('Data/GIST_Test.csv')
 X_test = preprocess(df_test, is_test=True)
 
 # 3. Feature selection based on indices from previous grid search, selecting only the features that were identified as important in the previous analysis 
