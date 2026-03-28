@@ -50,19 +50,11 @@ X_train = preprocess(df_train, is_test=False)
 df_test = pd.read_csv('Data/GIST_Test.csv')
 X_test = preprocess(df_test, is_test=True)
 
-<<<<<<< HEAD
-# 3. Feature selection based on indices from previous grid search
-feat_df = pd.read_csv('results_grid/selected_features_indices.csv') #CSV file containing indices of selected features based on previous grid search analysis, read into a DataFrame
-indices = feat_df['index'].astype(int)                              #convert indices to integer type for indexing
-X_train_sel = X_train[:, indices]                                   #select only the features from training data that were identified as important in the previous analysis using the indices from the CSV file
-X_test_sel = X_test[:, indices]                                     #select only the features from test data that were identified as important in the previous analysis using the indices from the CSV file
-=======
 # 3. Feature selection based on indices from previous grid search, selecting only the features that were identified as important in the previous analysis 
-feat_df = pd.read_csv('Results/selected_features_indices.csv')
+feat_df = pd.read_csv('Results/selected_features.csv')
 indices = feat_df['index'].astype(int)
 X_train_sel = X_train[:, indices]
 X_test_sel = X_test[:, indices]
->>>>>>> 42173446eb9eec665e29a9b15389d5a0e600b0ac
 print(f"Selected features: {X_test_sel.shape[1]}")
 
 # 4. Model Training
