@@ -50,33 +50,33 @@ X_train = preprocess(df_train, is_test=False)
 df_test = pd.read_csv('GIST_Test.csv')
 X_test = preprocess(df_test, is_test=True)
 
-# 3. Feature selection based on indices from previous grid search, selecting only the features that were identified as important in the previous analysis 
-feat_df = pd.read_csv('results_grid/selected_features_indices.csv')
-indices = feat_df['index'].astype(int)
-X_train_sel = X_train[:, indices]
-X_test_sel = X_test[:, indices]
+# 3. Feature selection based on indices from previous grid search
+feat_df = pd.read_csv('results_grid/selected_features_indices.csv') #CSV file containing indices of selected features based on previous grid search analysis, read into a DataFrame
+indices = feat_df['index'].astype(int)                              #convert indices to integer type for indexing
+X_train_sel = X_train[:, indices]                                   #select only the features from training data that were identified as important in the previous analysis using the indices from the CSV file
+X_test_sel = X_test[:, indices]                                     #select only the features from test data that were identified as important in the previous analysis using the indices from the CSV file
 print(f"Selected features: {X_test_sel.shape[1]}")
 
 # 4. Model Training
-model = SVC(C=0.1, kernel='linear', probability=True, random_state=42)
-model.fit(X_train_sel, y_train)
+model = SVC(C=0.1, kernel='linear', probability=True, random_state=42)  #initialize Support Vector Machine (SVM) classifier with specified hyperparameters 
+model.fit(X_train_sel, y_train)                                         #fit the SVM model on the selected features of the training data and corresponding labels (GIST vs non-GIST)        
 
-# 5. Voorspellen op testdata
-pred = model.predict(X_test_sel)
-prob = model.predict_proba(X_test_sel)[:,1]
-y_test = df_test['label'].map({'GIST':1, 'non-GIST':0}).values
+# 5. Predictions and probabilities on test data
+pred = model.predict(X_test_sel)                                #predict class labels 
+prob = model.predict_proba(X_test_sel)[:,1]                     #predict probabilities of the positive class (GIST) for the test data 
+y_test = df_test['label'].map({'GIST':1, 'non-GIST':0}).values  #encode true labels of test data as binary values (1 for GIST, 0 for non-GIST) for evaluation metrics calculation
 
-# 6. Metrics
-mis = (pred != y_test).sum()
-acc = accuracy_score(y_test, pred)
-f1 = f1_score(y_test, pred)
-rec = recall_score(y_test, pred)
-auc = roc_auc_score(y_test, prob)
-spec = recall_score(y_test, pred, pos_label=0)
+# 6. Evaluation metrics
+mis = (pred != y_test).sum()                    #calculate number of misclassifications by comparing predicted labels with true labels of test data
+acc = accuracy_score(y_test, pred)              #calculate accuracy of predictions
+f1 = f1_score(y_test, pred)                     #calculate F1 score of predictions 
+rec = recall_score(y_test, pred)                #calculate recall (sensitivity) for the positive class (GIST) 
+auc = roc_auc_score(y_test, prob)               #calculate Area Under the Receiver Operating Characteristic Curve (AUC)
+spec = recall_score(y_test, pred, pos_label=0)  #calculate specificity (true negative rate) for the negative class (non-GIST) 
 
-# Opslaan en printen
-out = pd.DataFrame({'prediction': pred, 'prob': prob, 'true': y_test})
-out.to_csv('predictions.csv', index=False)
+# 7. Save predictions and probabilities to CSV file
+out = pd.DataFrame({'prediction': pred, 'prob': prob, 'true': y_test})  #create a DataFrame to store predicted class labels, predicted probabilities for the positive class (GIST)
+out.to_csv('predictions.csv', index=False)                              #save the DataFrame containing predictions, probabilities, and true labels to a CSV file 
 
 print("-" * 30)
 print(f"Misclassifications: {mis}")
