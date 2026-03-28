@@ -21,7 +21,7 @@ from scipy.stats import zscore, loguniform
 RANDOM_STATE = 42                                                           #fixed random state
 #%%
 def load_gist_train_data():                                                 #function to load data
-    df = pd.read_csv("GIST_Train.csv")                                      #read csv file
+    df = pd.read_csv("Data/GIST_Train.csv")                                      #read csv file
     print(f"Data: {df.shape}, Classes: {df['label'].value_counts()}")       #print data shape and class distribution
     X = df.drop(columns=["label"]).select_dtypes(include=[np.number])       #select numeric features 
     y = df["label"].map({"GIST": 1, "non-GIST": 0}).astype(int).values      #encode labels as 1 and 0                                 
